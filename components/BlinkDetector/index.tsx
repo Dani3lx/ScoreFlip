@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 
 const LEFT_EYE = [362, 385, 387, 263, 373, 380];
@@ -22,6 +22,7 @@ let cachedLandmarker: FaceLandmarker | null = null;
 export default function BlinkDetector({ onDoubleBlink }: { onDoubleBlink: () => void }) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const onDoubleBlinkRef = useRef(onDoubleBlink);
+    const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
 
     useEffect(() => {
         onDoubleBlinkRef.current = onDoubleBlink;
@@ -90,6 +91,7 @@ export default function BlinkDetector({ onDoubleBlink }: { onDoubleBlink: () => 
 
         async function start() {
             try {
+                setStatus("loading");
                 if (!cachedLandmarker) {
                     const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm");
                     cachedLandmarker = await FaceLandmarker.createFromOptions(vision, {
@@ -110,10 +112,14 @@ export default function BlinkDetector({ onDoubleBlink }: { onDoubleBlink: () => 
                 videoRef.current.srcObject = stream;
                 videoRef.current.onloadedmetadata = () => {
                     videoRef.current!.play();
-                    videoRef.current!.oncanplay = () => requestAnimationFrame(processFrame);
+                    videoRef.current!.oncanplay = () => {
+                        setStatus("ready");
+                        requestAnimationFrame(processFrame);
+                    };
                 };
             } catch (e) {
                 console.error("BlinkDetector failed to start:", e);
+                setStatus("error");
             }
         }
 
@@ -126,5 +132,11 @@ export default function BlinkDetector({ onDoubleBlink }: { onDoubleBlink: () => 
         };
     }, []);
 
-    return <video ref={videoRef} autoPlay muted playsInline hidden />;
+    return (
+        <>
+            {status === "loading" && <p>Loading blink detection...</p>}
+            {status === "error" && <p>Camera error — check permissions</p>}
+            <video ref={videoRef} autoPlay muted playsInline hidden />
+        </>
+    );
 }
