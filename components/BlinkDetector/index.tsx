@@ -5,7 +5,7 @@ import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 const LEFT_EYE = [362, 385, 387, 263, 373, 380];
 const RIGHT_EYE = [33, 160, 158, 133, 153, 144];
 
-const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+const IS_IOS = typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
 const MODEL_URL = IS_IOS
     ? "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float32/1/face_landmarker.task"
     : "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
@@ -20,24 +20,105 @@ function calcEAR(landmarks: { x: number; y: number }[], indices: number[]) {
     const v1 = dist(p[1], p[5]);
     const v2 = dist(p[2], p[4]);
     const h = dist(p[0], p[3]);
+    if (h === 0) return 0;
     return (v1 + v2) / (2.0 * h);
 }
 
 let cachedLandmarker: FaceLandmarker | null = null;
+let loadingPromise: Promise<FaceLandmarker | undefined> | null = null;
+
+// preload starts immediately when component mounts
+async function preloadLandmarker() {
+    if (cachedLandmarker) return cachedLandmarker;
+    if (loadingPromise) {
+        return loadingPromise;
+    }
+
+    loadingPromise = (async () => {
+        try {
+            const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm");
+
+            cachedLandmarker = await FaceLandmarker.createFromOptions(vision, {
+                baseOptions: {
+                    modelAssetPath: MODEL_URL,
+                    delegate: "CPU",
+                },
+                runningMode: "VIDEO",
+                numFaces: 1,
+            });
+
+            return cachedLandmarker;
+        } catch (err) {
+            loadingPromise = null;
+            throw err;
+        }
+    })();
+
+    return loadingPromise;
+}
 
 export default function BlinkDetector({ onDoubleBlink }: { onDoubleBlink: () => void }) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const onDoubleBlinkRef = useRef(onDoubleBlink);
-    const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+    const animationFrameRef = useRef<number | null>(null);
+    const streamRef = useRef<MediaStream | null>(null);
+    const [status, setStatus] = useState<"idle" | "preloading" | "starting" | "ready" | "error">("idle");
 
     useEffect(() => {
         onDoubleBlinkRef.current = onDoubleBlink;
     }, [onDoubleBlink]);
 
+    // preload model as soon as component mounts
     useEffect(() => {
-        let animFrame: number;
-        let landmarker: FaceLandmarker;
+        let mounted = true;
 
+        const load = async () => {
+            try {
+                setStatus("preloading");
+                await preloadLandmarker();
+
+                if (mounted) {
+                    setStatus("idle");
+                }
+            } catch {
+                if (mounted) {
+                    setStatus("error");
+                }
+            }
+        };
+
+        load();
+
+        return () => {
+            mounted = false;
+        };
+    }, []);
+
+    // Clean up animation and stream
+    useEffect(() => {
+        const video = videoRef.current;
+
+        return () => {
+            if (animationFrameRef.current !== null) {
+                cancelAnimationFrame(animationFrameRef.current);
+            }
+
+            streamRef.current?.getTracks().forEach((track) => {
+                track.stop();
+            });
+
+            video?.pause();
+
+            if (video) {
+                video.srcObject = null;
+            }
+        };
+    }, []);
+
+    async function enableCamera() {
+        setStatus("starting");
+
+        let lastVideoTime = -1;
         let eyeClosed = false;
         let blinkStart = 0;
         let lastBlinkTime = 0;
@@ -45,21 +126,18 @@ export default function BlinkDetector({ onDoubleBlink }: { onDoubleBlink: () => 
         const DOUBLE_BLINK_WINDOW = 600;
         let lastTurn = 0;
 
-        let lastVideoTime = -1;
-
         function processFrame() {
             const video = videoRef.current;
-            if (!video || !landmarker || video.paused || video.ended || video.readyState < 2) {
-                animFrame = requestAnimationFrame(processFrame);
+            if (!video || !cachedLandmarker || video.paused || video.ended || video.readyState < 2) {
+                animationFrameRef.current = requestAnimationFrame(processFrame);
                 return;
             }
 
-            // only process if video has a new frame
             if (video.currentTime !== lastVideoTime) {
                 lastVideoTime = video.currentTime;
 
-                const now = Date.now();
-                const results = landmarker.detectForVideo(video, now);
+                const now = performance.now();
+                const results = cachedLandmarker.detectForVideo(video, now);
 
                 if (results.faceLandmarks?.length) {
                     const lm = results.faceLandmarks[0];
@@ -90,65 +168,47 @@ export default function BlinkDetector({ onDoubleBlink }: { onDoubleBlink: () => 
                 }
             }
 
-            animFrame = requestAnimationFrame(processFrame);
+            animationFrameRef.current = requestAnimationFrame(processFrame);
         }
 
-        async function start() {
-            try {
-                setStatus("loading");
-                if (!cachedLandmarker) {
-                    const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm");
-                    cachedLandmarker = await FaceLandmarker.createFromOptions(vision, {
-                        baseOptions: {
-                            modelAssetPath: MODEL_URL,
-                            delegate: "CPU",
-                        },
-                        runningMode: "VIDEO",
-                        numFaces: 1,
-                    });
+        try {
+            // wait for preload if still in progress
+            if (!cachedLandmarker) await preloadLandmarker();
+
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: "user",
+                    width: { ideal: 640 },
+                    height: { ideal: 480 },
+                },
+            });
+
+            streamRef.current = stream;
+
+            if (!videoRef.current) return;
+            videoRef.current.srcObject = stream;
+            videoRef.current.onloadedmetadata = async () => {
+                try {
+                    await videoRef.current?.play();
+                    setStatus("ready");
+                    animationFrameRef.current = requestAnimationFrame(processFrame);
+                } catch (e) {
+                    console.error("Playback failed:", e);
+                    setStatus("error");
                 }
-
-                landmarker = cachedLandmarker;
-
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        facingMode: "user",
-                        width: { ideal: 640 },
-                        height: { ideal: 480 },
-                    },
-                });
-
-                if (!videoRef.current) return;
-                videoRef.current.srcObject = stream;
-
-                videoRef.current.onloadedmetadata = async () => {
-                    try {
-                        await videoRef.current?.play();
-                        setStatus("ready");
-                        requestAnimationFrame(processFrame);
-                    } catch (playError) {
-                        console.error("Playback failed:", playError);
-                        setStatus("error");
-                    }
-                };
-            } catch (e) {
-                console.error("BlinkDetector failed to start:", e);
-                setStatus("error");
-            }
+            };
+        } catch (e) {
+            console.error("Camera failed:", e);
+            setStatus("error");
         }
-
-        start();
-
-        return () => {
-            cancelAnimationFrame(animFrame);
-            const stream = videoRef.current?.srcObject as MediaStream;
-            stream?.getTracks().forEach((t) => t.stop());
-        };
-    }, []);
+    }
 
     return (
         <>
-            {status === "loading" && <p>Loading blink detection...</p>}
+            {status === "idle" && <button onClick={enableCamera}>Enable blink control</button>}
+            {status === "preloading" && <button disabled>Preparing...</button>}
+            {status === "starting" && <button disabled>Starting camera...</button>}
+            {status === "ready" && <p>Blink control active</p>}
             {status === "error" && <p>Camera error — check permissions</p>}
             <video
                 ref={videoRef}
