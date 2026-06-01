@@ -49,7 +49,8 @@ export default function BlinkDetector({ onDoubleBlink }: { onDoubleBlink: () => 
             lastFrameTime = timestamp;
 
             const video = videoRef.current;
-            if (!video || !landmarker || video.videoWidth === 0 || video.videoHeight === 0) {
+            // Ensure video is actively playing and yielding frames
+            if (!video || !landmarker || video.paused || video.ended || video.readyState < 2) {
                 animFrame = requestAnimationFrame(processFrame);
                 return;
             }
@@ -98,7 +99,8 @@ export default function BlinkDetector({ onDoubleBlink }: { onDoubleBlink: () => 
                         baseOptions: {
                             modelAssetPath:
                                 "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
-                            delegate: "GPU",
+                            // CHANGED: Fixed iPad WebKit WebGL WASM thread crashing issues
+                            delegate: "CPU",
                         },
                         runningMode: "VIDEO",
                         numFaces: 1,
@@ -107,15 +109,23 @@ export default function BlinkDetector({ onDoubleBlink }: { onDoubleBlink: () => 
 
                 landmarker = cachedLandmarker;
 
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                // Explicit video constraints help iPadOS fetch the optimal front-facing stream
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "user" },
+                });
+
                 if (!videoRef.current) return;
                 videoRef.current.srcObject = stream;
-                videoRef.current.onloadedmetadata = () => {
-                    videoRef.current!.play();
-                    videoRef.current!.oncanplay = () => {
+
+                videoRef.current.onloadedmetadata = async () => {
+                    try {
+                        await videoRef.current?.play();
                         setStatus("ready");
                         requestAnimationFrame(processFrame);
-                    };
+                    } catch (playError) {
+                        console.error("Playback failed:", playError);
+                        setStatus("error");
+                    }
                 };
             } catch (e) {
                 console.error("BlinkDetector failed to start:", e);
@@ -136,7 +146,13 @@ export default function BlinkDetector({ onDoubleBlink }: { onDoubleBlink: () => 
         <>
             {status === "loading" && <p>Loading blink detection...</p>}
             {status === "error" && <p>Camera error — check permissions</p>}
-            <video ref={videoRef} autoPlay muted playsInline hidden />
+            <video
+                ref={videoRef}
+                autoPlay
+                muted
+                playsInline
+                style={{ position: "absolute", width: "1px", height: "1px", opacity: 0, pointerEvents: "none" }}
+            />
         </>
     );
 }
