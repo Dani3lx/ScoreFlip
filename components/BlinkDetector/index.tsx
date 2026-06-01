@@ -5,6 +5,12 @@ import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 const LEFT_EYE = [362, 385, 387, 263, 373, 380];
 const RIGHT_EYE = [33, 160, 158, 133, 153, 144];
 
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+const MODEL_URL = IS_IOS
+    ? "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float32/1/face_landmarker.task"
+    : "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
+const EAR_THRESHOLD = IS_IOS ? 0.25 : 0.22;
+
 function dist(a: { x: number; y: number }, b: { x: number; y: number }) {
     return Math.hypot(a.x - b.x, a.y - b.y);
 }
@@ -31,56 +37,53 @@ export default function BlinkDetector({ onDoubleBlink }: { onDoubleBlink: () => 
     useEffect(() => {
         let animFrame: number;
         let landmarker: FaceLandmarker;
-        let lastFrameTime = 0;
 
         let eyeClosed = false;
         let blinkStart = 0;
         let lastBlinkTime = 0;
-        const THRESHOLD = 0.22;
         const COOLDOWN = 1200;
         const DOUBLE_BLINK_WINDOW = 600;
         let lastTurn = 0;
 
-        function processFrame(timestamp: number) {
-            if (timestamp - lastFrameTime < 33) {
-                animFrame = requestAnimationFrame(processFrame);
-                return;
-            }
-            lastFrameTime = timestamp;
+        let lastVideoTime = -1;
 
+        function processFrame() {
             const video = videoRef.current;
-            // Ensure video is actively playing and yielding frames
             if (!video || !landmarker || video.paused || video.ended || video.readyState < 2) {
                 animFrame = requestAnimationFrame(processFrame);
                 return;
             }
 
-            const now = Date.now();
-            const results = landmarker.detectForVideo(video, now);
+            // only process if video has a new frame
+            if (video.currentTime !== lastVideoTime) {
+                lastVideoTime = video.currentTime;
 
-            if (results.faceLandmarks?.length) {
-                const lm = results.faceLandmarks[0];
-                const ear = (calcEAR(lm, LEFT_EYE) + calcEAR(lm, RIGHT_EYE)) / 2;
+                const now = Date.now();
+                const results = landmarker.detectForVideo(video, now);
 
-                if (ear < THRESHOLD) {
-                    if (!eyeClosed) {
-                        eyeClosed = true;
-                        blinkStart = now;
-                    }
-                } else {
-                    if (eyeClosed) {
-                        eyeClosed = false;
-                        const duration = now - blinkStart;
+                if (results.faceLandmarks?.length) {
+                    const lm = results.faceLandmarks[0];
+                    const ear = (calcEAR(lm, LEFT_EYE) + calcEAR(lm, RIGHT_EYE)) / 2;
 
-                        if (duration > 60 && duration < 400) {
-                            if (now - lastBlinkTime < DOUBLE_BLINK_WINDOW) {
-                                lastBlinkTime = 0;
-                                if (now - lastTurn > COOLDOWN) {
-                                    lastTurn = now;
-                                    onDoubleBlinkRef.current();
+                    if (ear < EAR_THRESHOLD) {
+                        if (!eyeClosed) {
+                            eyeClosed = true;
+                            blinkStart = now;
+                        }
+                    } else {
+                        if (eyeClosed) {
+                            eyeClosed = false;
+                            const duration = now - blinkStart;
+                            if (duration > 60 && duration < 400) {
+                                if (now - lastBlinkTime < DOUBLE_BLINK_WINDOW) {
+                                    lastBlinkTime = 0;
+                                    if (now - lastTurn > COOLDOWN) {
+                                        lastTurn = now;
+                                        onDoubleBlinkRef.current();
+                                    }
+                                } else {
+                                    lastBlinkTime = now;
                                 }
-                            } else {
-                                lastBlinkTime = now;
                             }
                         }
                     }
@@ -97,9 +100,7 @@ export default function BlinkDetector({ onDoubleBlink }: { onDoubleBlink: () => 
                     const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm");
                     cachedLandmarker = await FaceLandmarker.createFromOptions(vision, {
                         baseOptions: {
-                            modelAssetPath:
-                                "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
-                            // CHANGED: Fixed iPad WebKit WebGL WASM thread crashing issues
+                            modelAssetPath: MODEL_URL,
                             delegate: "CPU",
                         },
                         runningMode: "VIDEO",
@@ -109,9 +110,12 @@ export default function BlinkDetector({ onDoubleBlink }: { onDoubleBlink: () => 
 
                 landmarker = cachedLandmarker;
 
-                // Explicit video constraints help iPadOS fetch the optimal front-facing stream
                 const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: "user" },
+                    video: {
+                        facingMode: "user",
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                    },
                 });
 
                 if (!videoRef.current) return;
