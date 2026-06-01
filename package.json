@@ -4,7 +4,7 @@
     "private": true,
     "scripts": {
         "dev": "next dev",
-        "prebuild": "curl -L 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task' -o public/face_landmarker.task",
+        "prebuild": "curl -L \"https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task\" -o public/face_landmarker.task",
         "build": "next build",
         "start": "next start",
         "lint": "eslint"

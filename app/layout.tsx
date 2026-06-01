@@ -17,7 +17,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata = {
-    manifest: "/manifest.json",
+    manifest: "/manifest.webmanifest",
 };
 
 export default function RootLayout({
