@@ -5,11 +5,8 @@ import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 const LEFT_EYE = [362, 385, 387, 263, 373, 380];
 const RIGHT_EYE = [33, 160, 158, 133, 153, 144];
 
-const IS_IOS = typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
-const MODEL_URL = IS_IOS
-    ? "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float32/1/face_landmarker.task"
-    : "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
-const EAR_THRESHOLD = IS_IOS ? 0.25 : 0.22;
+const MODEL_URL = "/face_landmarker.task";
+const EAR_THRESHOLD = 0.22;
 
 function dist(a: { x: number; y: number }, b: { x: number; y: number }) {
     return Math.hypot(a.x - b.x, a.y - b.y);
