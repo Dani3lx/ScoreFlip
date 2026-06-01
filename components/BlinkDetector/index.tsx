@@ -68,19 +68,20 @@ export default function BlinkDetector({ onDoubleBlink }: { onDoubleBlink: () => 
         onDoubleBlinkRef.current = onDoubleBlink;
     }, [onDoubleBlink]);
 
-    // preload model as soon as component mounts
     useEffect(() => {
         let mounted = true;
 
         const load = async () => {
             try {
                 setStatus("preloading");
+                console.log("Starting preload...");
                 await preloadLandmarker();
-
+                console.log("Preload complete");
                 if (mounted) {
                     setStatus("idle");
                 }
-            } catch {
+            } catch (e) {
+                console.error("Preload error:", e);
                 if (mounted) {
                     setStatus("error");
                 }
@@ -172,9 +173,6 @@ export default function BlinkDetector({ onDoubleBlink }: { onDoubleBlink: () => 
         }
 
         try {
-            // wait for preload if still in progress
-            if (!cachedLandmarker) await preloadLandmarker();
-
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: {
                     facingMode: "user",
@@ -188,6 +186,8 @@ export default function BlinkDetector({ onDoubleBlink }: { onDoubleBlink: () => 
             videoRef.current.onloadedmetadata = async () => {
                 try {
                     await videoRef.current?.play();
+                    if (!cachedLandmarker) await preloadLandmarker();
+
                     setStatus("ready");
                     animationFrameRef.current = requestAnimationFrame(processFrame);
                 } catch (e) {
