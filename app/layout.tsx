@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Viewport } from "next";
+import { SerwistProvider } from "@serwist/turbopack/react";
+import type { Metadata, Viewport } from "next";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -12,14 +13,49 @@ const geistMono = Geist_Mono({
     subsets: ["latin"],
 });
 
+const APP_NAME = "ScoreFlip";
+const APP_DEFAULT_TITLE = "ScoreFlip";
+const APP_TITLE_TEMPLATE = "%s - ScoreFlip";
+const APP_DESCRIPTION = "Best ScoreFlip in the world!";
+
+export const metadata: Metadata = {
+    applicationName: APP_NAME,
+    title: {
+        default: APP_DEFAULT_TITLE,
+        template: APP_TITLE_TEMPLATE,
+    },
+    description: APP_DESCRIPTION,
+    appleWebApp: {
+        capable: true,
+        statusBarStyle: "default",
+        title: APP_DEFAULT_TITLE,
+        // startUpImage: [],
+    },
+    formatDetection: {
+        telephone: false,
+    },
+    openGraph: {
+        type: "website",
+        siteName: APP_NAME,
+        title: {
+            default: APP_DEFAULT_TITLE,
+            template: APP_TITLE_TEMPLATE,
+        },
+        description: APP_DESCRIPTION,
+    },
+    twitter: {
+        card: "summary",
+        title: {
+            default: APP_DEFAULT_TITLE,
+            template: APP_TITLE_TEMPLATE,
+        },
+        description: APP_DESCRIPTION,
+    },
+};
+
 export const viewport: Viewport = {
-    themeColor: "#000000",
+    themeColor: "#FFFFFF",
 };
-
-export const metadata = {
-    manifest: "/manifest.webmanifest",
-};
-
 export default function RootLayout({
     children,
 }: Readonly<{
@@ -27,7 +63,9 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-            <body className="min-h-full flex flex-col">{children}</body>
+            <body className="min-h-full flex flex-col">
+                <SerwistProvider swUrl="/serwist/sw.js">{children}</SerwistProvider>
+            </body>
         </html>
     );
 }

@@ -3,8 +3,8 @@
     "version": "0.1.0",
     "private": true,
     "scripts": {
-        "dev": "next dev",
-        "prebuild": "curl -L \"https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task\" -o public/face_landmarker.task",
+        "dev": "npm run prebuild && next dev --turbopack",
+        "prebuild": "npx shx mkdir -p public/wasm && npx shx cp node_modules/@mediapipe/tasks-vision/wasm/vision_wasm_internal.js public/wasm/vision_wasm_internal.js && npx shx cp node_modules/@mediapipe/tasks-vision/wasm/vision_wasm_internal.wasm public/wasm/vision_wasm_internal.wasm && npx shx cp node_modules/@mediapipe/tasks-vision/wasm/vision_wasm_nosimd_internal.js public/wasm/vision_wasm_nosimd_internal.js && npx shx cp node_modules/@mediapipe/tasks-vision/wasm/vision_wasm_nosimd_internal.wasm public/wasm/vision_wasm_nosimd_internal.wasm && npx shx cp node_modules/pdfjs-dist/build/pdf.worker.min.mjs public/pdf.worker.min.mjs && curl -L \"https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task\" -o public/face_landmarker.task",
         "build": "next build",
         "start": "next start",
         "lint": "eslint"
@@ -17,12 +17,15 @@
         "react-pdf": "^10.4.1"
     },
     "devDependencies": {
+        "@serwist/turbopack": "^9.5.11",
         "@tailwindcss/postcss": "^4",
         "@types/node": "^20",
         "@types/react": "^19",
         "@types/react-dom": "^19",
+        "esbuild": "^0.28.0",
         "eslint": "^9",
         "eslint-config-next": "16.2.6",
+        "serwist": "^9.5.11",
         "tailwindcss": "^4",
         "typescript": "^5"
     }

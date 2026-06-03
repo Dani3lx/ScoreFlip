@@ -33,7 +33,7 @@ async function preloadLandmarker() {
 
     loadingPromise = (async () => {
         try {
-            const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm");
+            const vision = await FilesetResolver.forVisionTasks("/wasm");
 
             cachedLandmarker = await FaceLandmarker.createFromOptions(vision, {
                 baseOptions: {

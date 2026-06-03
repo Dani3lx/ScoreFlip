@@ -41,3 +41,5 @@ yarn-error.log*
 next-env.d.ts
 
 public/face_landmarker.task
+public/pdf.worker.min.mjs
+public/wasm
