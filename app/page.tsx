@@ -12,7 +12,7 @@ export default function Home() {
         if (!files.length) return;
         const f = files[0].file;
         if (f instanceof File) {
-            setFile(URL.createObjectURL(f));
+            setTimeout(() => setFile(URL.createObjectURL(f)), 0);
         }
     }, []);
     return (
