@@ -158,9 +158,7 @@ export function FileUpload({
                         <div className="space-y-2">
                             <h3 className="text-lg font-semibold">Upload your file</h3>
                             <p className="text-muted-foreground text-sm">Drag and drop file here or click to browse</p>
-                            <p className="text-muted-foreground text-xs">
-                                Support for multiple file types up to {formatBytes(maxSize)} each
-                            </p>
+                            <p className="text-muted-foreground text-xs">Support for pdf file up to {formatBytes(maxSize)}</p>
                         </div>
 
                         <Button onClick={openFileDialog}>
