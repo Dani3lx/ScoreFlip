@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { formatBytes, useFileUpload, type FileMetadata, type FileWithPreview } from "@/hooks/use-file-upload";
 import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/reui/alert";
 import { Badge } from "@/components/reui/badge";

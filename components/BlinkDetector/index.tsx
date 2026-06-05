@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/reui/badge";
 
 const LEFT_EYE = [362, 385, 387, 263, 373, 380];
 const RIGHT_EYE = [33, 160, 158, 133, 153, 144];
@@ -52,7 +54,7 @@ async function preloadLandmarker() {
     return loadingPromise;
 }
 
-export default function BlinkDetector({ onDoubleBlink }: { onDoubleBlink: () => void }) {
+export default function BlinkDetector({ onDoubleBlink, className }: { onDoubleBlink: () => void; className: string }) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const onDoubleBlinkRef = useRef(onDoubleBlink);
     const animationFrameRef = useRef<number | null>(null);
@@ -215,13 +217,37 @@ export default function BlinkDetector({ onDoubleBlink }: { onDoubleBlink: () => 
     }
 
     return (
-        <>
-            {status === "idle" && <button onClick={enableCamera}>Enable blink control</button>}
-            {status === "preloading" && <button disabled>Preparing...</button>}
-            {status === "starting" && <button disabled>Starting camera...</button>}
-            {status === "calibrating" && <button disabled>Calibrating... keep eyes open</button>}
-            {status === "ready" && <p>Blink control active</p>}
-            {status === "error" && <p>Camera error — check permissions</p>}
+        <div className={className}>
+            {status === "idle" && (
+                <Button variant={"outline"} onClick={enableCamera}>
+                    Enable blink control
+                </Button>
+            )}
+            {status === "preloading" && (
+                <Button variant={"outline"} disabled>
+                    Preparing...
+                </Button>
+            )}
+            {status === "starting" && (
+                <Button variant={"outline"} disabled>
+                    Starting camera...
+                </Button>
+            )}
+            {status === "calibrating" && (
+                <Button variant={"outline"} disabled>
+                    Calibrating... keep eyes open
+                </Button>
+            )}
+            {status === "ready" && (
+                <Badge size="sm" variant="success-light">
+                    Blink control active
+                </Badge>
+            )}
+            {status === "error" && (
+                <Badge size="sm" variant="warning-light">
+                    Camera error — check permissions
+                </Badge>
+            )}
             <video
                 ref={videoRef}
                 autoPlay
@@ -229,6 +255,6 @@ export default function BlinkDetector({ onDoubleBlink }: { onDoubleBlink: () => 
                 playsInline
                 style={{ position: "absolute", width: "1px", height: "1px", opacity: 0, pointerEvents: "none" }}
             />
-        </>
+        </div>
     );
 }
