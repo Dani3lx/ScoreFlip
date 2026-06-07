@@ -35,7 +35,7 @@ export default function Home() {
     
     return (
         <>
-            <div className="flex flex-col w-full h-screen items-center justify-center gap-4 min-w-100">
+            <div className="flex flex-col w-full h-screen items-center justify-center gap-4 min-w-100 p-4">
                 {!ready && <FileUpload onFilesChange={uploadFile} />}
                 {file && !ready && (
                     <Button size="lg" variant={"outline"} onClick={() => setReady(true)}>

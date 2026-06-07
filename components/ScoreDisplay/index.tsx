@@ -1,5 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
+import { ArrowLeftIcon } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useState, useCallback, useRef } from "react";
 
@@ -28,7 +29,7 @@ export default function ScoreDisplay({ file, onResetFile }: { file: string | nul
       {file && (
         <div className="flex flex-col items-center max-sm:justify-between h-screen">
           <div className="flex justify-center gap-4 items-center w-screen p-4">
-            <Button variant="secondary" className="absolute left-4" onClick={() => onResetFile(file)}>Change File</Button>
+            <Button variant="secondary" className="absolute left-4" onClick={() => onResetFile(file)}><ArrowLeftIcon /></Button>
             <div className="flex gap-4 items-center justify-center">
               <Button onClick={prevPage} disabled={pageNumber === 1}>Back</Button>
               <span>
