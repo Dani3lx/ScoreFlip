@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 const APP_NAME = "ScoreFlip";
 const APP_DEFAULT_TITLE = "ScoreFlip";
 const APP_TITLE_TEMPLATE = "%s - ScoreFlip";
-const APP_DESCRIPTION = "Best ScoreFlip in the world!";
+const APP_DESCRIPTION = "Hands free pdf flipper for score reading practice.";
 
 export const metadata: Metadata = {
     applicationName: APP_NAME,
