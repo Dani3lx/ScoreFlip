@@ -30,11 +30,11 @@ export default function ScoreDisplay({ file, onResetFile }: { file: string | nul
           <div className="flex justify-center gap-4 items-center w-screen p-4">
             <Button variant="secondary" className="absolute left-4" onClick={() => onResetFile(file)}>Change File</Button>
             <div className="flex gap-4 items-center justify-center">
-              <Button onClick={prevPage}>Back</Button>
+              <Button onClick={prevPage} disabled={pageNumber === 1}>Back</Button>
               <span>
                 {pageNumber} / {numPages}
               </span>
-              <Button onClick={nextPage}>Next</Button>
+              <Button onClick={nextPage} disabled={pageNumber === numPages}>Next</Button>
             </div>
 
             <BlinkDetector
