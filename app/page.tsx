@@ -39,9 +39,9 @@ export default function Home() {
         <>
             <div className="flex flex-col w-full h-screen items-center justify-center gap-4 min-w-100 p-4">
                 {!ready && (
-                    <div className="flex flex-col justify-center items-center text-center">
-                        <h1>Score Flip</h1>
-                        <p>Upload a document and use eye-blink gestures to navigate</p>
+                    <div className="flex flex-col justify-center items-center text-center gap-4 mb-8">
+                        <h1 className="font-bold text-3xl">Score Flip</h1>
+                        <p className="text-gray-500">Upload a document and use eye-blink gestures to navigate</p>
                     </div>
                 )}
                 {!ready && <FileUpload onFilesChange={uploadFile} onFileRemove={clearFile} />}
