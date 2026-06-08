@@ -34,6 +34,7 @@ interface ProgressUploadProps {
     multiple?: boolean;
     className?: string;
     onFilesChange?: (files: FileWithPreview[]) => void;
+    onFileRemove: () => void;
 }
 
 export function FileUpload({
@@ -43,6 +44,7 @@ export function FileUpload({
     multiple = false,
     className,
     onFilesChange,
+    onFileRemove,
 }: ProgressUploadProps) {
     // Create default images using FileMetadata type
     const defaultImages: FileMetadata[] = [];
@@ -109,6 +111,7 @@ export function FileUpload({
     };
 
     const removeUploadFile = (fileId: string) => {
+        onFileRemove();
         setUploadFiles((prev) => prev.filter((file) => file.id !== fileId));
         removeFile(fileId);
     };
@@ -156,7 +159,7 @@ export function FileUpload({
                         </div>
 
                         <div className="space-y-2">
-                            <h3 className="text-lg font-semibold">Upload your file</h3>
+                            <h3 className="text-lg font-semibold">Upload your PDF file</h3>
                             <p className="text-muted-foreground text-sm">Drag and drop file here or click to browse</p>
                             <p className="text-muted-foreground text-xs">Support for pdf file up to {formatBytes(maxSize)}</p>
                         </div>

@@ -10,33 +10,41 @@ export default function Home() {
     const [ready, setReady] = useState<boolean>(false);
     const uploadFile = useCallback((files: FileWithPreview[]) => {
         if (!files.length) return;
-    
+
         const f = files[0].file;
         if (!(f instanceof File)) return;
-    
+
         const newUrl = URL.createObjectURL(f);
-    
+
         queueMicrotask(() => {
             setFile((prev) => {
                 if (prev) {
                     URL.revokeObjectURL(prev);
                 }
-    
+
                 return newUrl;
             });
         });
     }, []);
 
-    const clearFile = useCallback((file: string) => {
-        URL.revokeObjectURL(file);
+    const clearFile = useCallback((file?: string) => {
+        if (file) {
+            URL.revokeObjectURL(file);
+        }
         setFile(null);
         setReady(false);
     }, []);
-    
+
     return (
         <>
             <div className="flex flex-col w-full h-screen items-center justify-center gap-4 min-w-100 p-4">
-                {!ready && <FileUpload onFilesChange={uploadFile} />}
+                {!ready && (
+                    <div className="flex flex-col justify-center items-center text-center">
+                        <h1>Score Flip</h1>
+                        <p>Upload a document and use eye-blink gestures to navigate</p>
+                    </div>
+                )}
+                {!ready && <FileUpload onFilesChange={uploadFile} onFileRemove={clearFile} />}
                 {file && !ready && (
                     <Button size="lg" variant={"outline"} onClick={() => setReady(true)}>
                         Continue
