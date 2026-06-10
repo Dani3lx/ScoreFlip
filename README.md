@@ -27,7 +27,7 @@ Upload and view PDF documents directly in the browser.
 Built as a Progressive Web App (PWA), ScoreFlip can be installed on desktop, tablet, and mobile devices for a native-app experience.
 
 ### ⚡ Offline Support
-Uses a cache-first strategy to continue working even without an internet connection after the app has been installed.
+Uses a cache-first and stale-while-revalidate strategy to continue working even without an internet connection after the app has been installed.
 
 ### 🔒 Privacy First
 All processing happens locally on your device. No user data is transmitted, stored, or sent to external servers.
