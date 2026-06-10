@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ScoreFlip
 
-## Getting Started
+**Hands-free PDF page turning using eye blinks.**
 
-First, run the development server:
+ScoreFlip is a Progressive Web App (PWA) that allows musicians to navigate PDF documents using double-blink gestures. It was built to solve a common frustration during practice and performance sessions: having to remove your hands from your instrument just to turn a page.
+
+Using real-time blink detection powered by MediaPipe Face Landmarker, ScoreFlip lets you stay focused on playing while seamlessly navigating your sheet music.
+
+
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/259ceb0c-92bf-4683-add0-81cd5bc7ee31" alt="ScoreFlip Demo" width="75%">
+</p>
+
+The application continuously tracks eye landmarks locally on your device and detects double-blink gestures to navigate between PDF pages without requiring any physical interaction.
+
+
+## Features
+
+### 👀 Blink-Controlled Navigation
+Navigate PDF pages using double blinks detected through your device's camera.
+
+### 📄 PDF Score Reader
+Upload and view PDF documents directly in the browser.
+
+### 📱 Installable Like a Native App
+Built as a Progressive Web App (PWA), ScoreFlip can be installed on desktop, tablet, and mobile devices for a native-app experience.
+
+### ⚡ Offline Support
+Uses a cache-first strategy to continue working even without an internet connection after the app has been installed.
+
+### 🔒 Privacy First
+All processing happens locally on your device. No user data is transmitted, stored, or sent to external servers.
+
+## Tech Stack
+
+- **Frontend:** Next.js
+- **Styling:** Tailwind CSS
+- **Blink Detection:** Google MediaPipe Face Landmarker
+- **PWA Support:** Serwist
+- **PDF Rendering:** Browser-based PDF viewer
+
+## How It Works
+
+1. Open ScoreFlip
+2. Upload a PDF score or document.
+3. Grant toggle on blink control and grant camera access.
+4. The app continuously monitors blink patterns using MediaPipe Face Landmarker.
+5. Perform a double blink to advance pages without touching the screen or keyboard.
+6. Continue practicing or performing uninterrupted.
+
+## Installation
+
+Clone the repository and install dependencies:
+
+```bash
+npm install
+```
+
+Start the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Important Note
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+PWA functionality requires a secure context (**HTTPS**) because service workers do not run over standard HTTP connections.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+As a result:
 
-## Learn More
+- Blink detection and general application development work normally in development mode.
+- Offline caching and installable PWA features require HTTPS-enabled environments or production builds.
 
-To learn more about Next.js, take a look at the following resources:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Future Improvements
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Additional gesture controls
+- Annotation support for scores
